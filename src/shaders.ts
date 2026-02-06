@@ -17,11 +17,6 @@ export default function createShaders(
 
   const program = linkShaders(cntx, vertShader, fragShader);
 
-  if (!program) {
-    console.log("Could not link shader program!");
-    return;
-  }
-
   cntx.deleteShader(vertShader);
   cntx.deleteShader(fragShader);
 
