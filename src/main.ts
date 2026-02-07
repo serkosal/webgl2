@@ -1,21 +1,15 @@
 import './style.css'
 
+import { VBO } from './gl_buffers.ts';
+import VAO from './vao.ts';
+import createShaders from './shaders.ts';
 import vertShaderSource from './shaders/default.vert?raw';
 import fragShaderSource from './shaders/default.frag?raw';
-
-import './shaders.ts';
-import createShaders from './shaders.ts';
-
-const positions = [
-    -1.0, -1.0,
-     1.0,  1.0,
-    -1.0,  1.0
-]
 
 function init() : {
   cntx: WebGL2RenderingContext,
   program: WebGLProgram,
-  vao: WebGLVertexArrayObject
+  vao: VAO
 } | undefined {
   // check html canvas and WebGL2 context
   const canv = document.querySelector<HTMLCanvasElement>('#webgl-canvas');
@@ -36,22 +30,21 @@ function init() : {
     return;
   }
   
-  // position buffer 
-  const posBuffer = cntx.createBuffer();
-  cntx.bindBuffer(cntx.ARRAY_BUFFER, posBuffer);
-  cntx.bufferData(cntx.ARRAY_BUFFER, new Float32Array(positions), cntx.STATIC_DRAW);
+  const vao = new VAO(cntx, new VBO(cntx, [
+    -1.0, -1.0,
+     1.0,  1.0,
+    -1.0,  1.0
+  ]));
 
-  // vertex array
-  const vao = cntx.createVertexArray();
-  cntx.bindVertexArray(vao);
+  vao.link(program, {
+    name: "a_position", 
+    size: 2, 
+    type: cntx.FLOAT, 
+    normalized: false,
+    stride: 0, offset: 0
+  });
+
   
-  // vertex shader input attrib
-  const posAttribLoc = cntx.getAttribLocation(program, "a_position");
-  cntx.enableVertexAttribArray(posAttribLoc);  
-  const sz     = 2; const type   = cntx.FLOAT; const norm   = false;
-  const stride = 0; const vap_offset = 0;
-  cntx.vertexAttribPointer(posAttribLoc, sz, type, norm, stride, vap_offset);
-
   // viewport
   cntx.viewport(0, 0, cntx.canvas.width, cntx.canvas.height);
 
@@ -61,7 +54,7 @@ function init() : {
 function draw(
   cntx: WebGL2RenderingContext,
   program: WebGLProgram,
-  vao: WebGLVertexArrayObject,
+  vao: VAO,
   primitive = cntx.TRIANGLES,
   offset = 0,
   num = 3,
@@ -73,7 +66,7 @@ function draw(
   cntx.useProgram(program);
 
   // binding verticies
-  cntx.bindVertexArray(vao);
+  vao.bind();
 
   // draw call
   cntx.drawArrays(primitive, offset, num); 
