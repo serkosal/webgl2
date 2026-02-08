@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+
+    "baseUrl": "/webgl/",
     "target": "ES2022",
     "useDefineForClassFields": true,
     "module": "ESNext",

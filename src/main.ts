@@ -2,7 +2,7 @@ import './style.css'
 
 import { mat4, vec3 } from 'gl-matrix';
 
-import { VBO, EBO } from './gl_buffers.ts';
+import { VBO } from './gl_buffers.ts';
 import VAO from './vao.ts';
 import createShaders from './shaders.ts';
 import vertShaderSource from './shaders/default.vert?raw';
