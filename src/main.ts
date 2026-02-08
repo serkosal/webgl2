@@ -9,13 +9,15 @@ import vertShaderSource from './shaders/default.vert?raw';
 import fragShaderSource from './shaders/default.frag?raw';
 
 const proj_mat = mat4.fromValues(
-  1, 0, 0, 0,
-  0, 1, 0, 0,
-  0, 0, 1, -1,
-  0, 0, 0, 1
+   1,  0,  0,  0,
+   0,  1,  0,  0,
+   0,  0,  1, -1,
+   0,  0,  0,  1
 );
 let model_mat = mat4.create();
-mat4.translate(model_mat, model_mat, vec3.fromValues(0, 0, -5));
+let view_mat = mat4.create();
+mat4.translate(view_mat, view_mat, vec3.fromValues(0, 0, -5));
+let cam_velocity = vec3.create(); vec3.zero(cam_velocity);
 
 let lastTime = Date.now();
 
@@ -82,6 +84,8 @@ function init() : {
   // viewport
   cntx.viewport(0, 0, cntx.canvas.width, cntx.canvas.height);
 
+  cntx.clearColor(0, 0, 0, 0);
+
   return {cntx, program, vao};
 }
 
@@ -90,12 +94,14 @@ function main() {
 
   if (init_res) {
     const {cntx, program, vao} = init_res;
-    cntx.clearColor(0, 0, 0, 0);
+    
     let trans_mat = mat4.create();
+    let cam_movement = vec3.create(); 
 
     // setting trans matrix
     cntx.useProgram(program);
     const uniformLoc = cntx.getUniformLocation(program, "trans");
+    
 
     function render(time: number)
     {
@@ -109,7 +115,13 @@ function main() {
       // update matrices
       mat4.rotateY(model_mat, model_mat, dt * Math.PI / 4);
       mat4.rotateZ(model_mat, model_mat, dt * Math.PI / 2);
-      mat4.mul(trans_mat, proj_mat, model_mat);
+
+      vec3.scale(cam_movement, cam_velocity, dt);
+      mat4.translate(view_mat, view_mat, cam_movement);
+
+      mat4.mul(trans_mat, view_mat, model_mat);
+      mat4.mul(trans_mat, proj_mat, trans_mat);
+      // mat4.mul(trans_mat, proj_mat, view_mat);
       cntx.uniformMatrix4fv(uniformLoc, false, trans_mat, 0, 0);
 
       // drawing
@@ -121,5 +133,52 @@ function main() {
     requestAnimationFrame(render);
   }
 }
+
+window.addEventListener('keydown', (e) => {
+  
+  switch (e.key) {
+    case 'ArrowDown':
+      cam_velocity[2] = -10;
+      break;
+    case 'ArrowRight':
+      cam_velocity[0] = -10;
+      break;
+    case 'ArrowUp':
+      cam_velocity[2] = 10;
+      break;
+    case 'ArrowLeft':
+      cam_velocity[0] = 10;
+      break;
+  
+    default:
+      break;
+  }
+
+
+  
+});
+
+window.addEventListener('keyup', (e) => {
+  switch (e.key) {
+    case 'ArrowDown':
+      cam_velocity[2] = 0;
+      break;
+
+    case 'ArrowRight':
+      cam_velocity[0] = 0;
+      break;
+
+    case 'ArrowUp':
+      cam_velocity[2] = 0;
+      break;
+
+    case 'ArrowLeft':
+      cam_velocity[0] = 0;
+      break;
+  
+    default:
+      break;
+  }
+});
 
 main();
