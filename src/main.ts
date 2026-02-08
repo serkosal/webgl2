@@ -1,10 +1,23 @@
 import './style.css'
 
+import { mat4, vec3 } from 'gl-matrix';
+
 import { VBO, EBO } from './gl_buffers.ts';
 import VAO from './vao.ts';
 import createShaders from './shaders.ts';
 import vertShaderSource from './shaders/default.vert?raw';
 import fragShaderSource from './shaders/default.frag?raw';
+
+const proj_mat = mat4.fromValues(
+  1, 0, 0, 0,
+  0, 1, 0, 0,
+  0, 0, 1, -1,
+  0, 0, 0, 1
+);
+let model_mat = mat4.create();
+mat4.translate(model_mat, model_mat, vec3.fromValues(0, 0, -5));
+
+let lastTime = Date.now();
 
 function init() : {
   cntx: WebGL2RenderingContext,
@@ -30,15 +43,30 @@ function init() : {
     return;
   }
   
-  const vbo = new VBO(cntx, [
-     0.5,  0.5, 0.0,  // top right
-     0.5, -0.5, 0.0,  // bottom right
-    -0.5, -0.5, 0.0,  // bottom left
-    -0.5,  0.5, 0.0   // top left 
+  const vbo = new VBO(cntx, [//      5---------------6
+     1.0, -1.0, -1.0,   // 0        /|              /|
+     1.0,  1.0, -1.0,   // 1       / |             / |
+    -1.0,  1.0, -1.0,   // 2      2---------------1  |
+    -1.0, -1.0, -1.0,   // 3      |  |            |  |
+                        //        |  |            |  |
+    -1.0, -1.0,  1.0,   // 4      |  4------------|--7
+    -1.0,  1.0,  1.0,   // 5      | /             | /
+     1.0,  1.0,  1.0,   // 6      |/              |/
+     1.0, -1.0,  1.0,   // 7      3---------------0
   ]);
   const ebo = new EBO(cntx, [
-    0, 1, 3,   // first triangle
-    1, 2, 3    // second triangle
+    0, 1, 2,            // front
+    2, 3, 0,            
+    3, 4, 5,            // left
+    5, 2, 3,
+    3, 0, 7,            // bottom
+    7, 4, 0,
+    0, 7, 6,            // right
+    6, 1, 0,
+    4, 7, 6,            // back
+    6, 5, 4,
+    2, 1, 6,            // top
+    6, 5, 1
   ]);
   const vao = new VAO(cntx, vbo, ebo);
 
@@ -59,14 +87,38 @@ function init() : {
 
 function main() {
   const init_res = init();
+
   if (init_res) {
     const {cntx, program, vao} = init_res;
-
-    // clearing 
     cntx.clearColor(0, 0, 0, 0);
-    cntx.clear(cntx.COLOR_BUFFER_BIT);
+    let trans_mat = mat4.create();
 
-    vao.draw(program);
+    // setting trans matrix
+    cntx.useProgram(program);
+    const uniformLoc = cntx.getUniformLocation(program, "trans");
+
+    function render(time: number)
+    {
+      // clearing 
+      cntx.clear(cntx.COLOR_BUFFER_BIT);
+
+      // elapsed time
+      const dt = (time - lastTime) / 1000;
+      lastTime = time;
+      
+      // update matrices
+      mat4.rotateY(model_mat, model_mat, dt * Math.PI / 4);
+      mat4.rotateZ(model_mat, model_mat, dt * Math.PI / 2);
+      mat4.mul(trans_mat, proj_mat, model_mat);
+      cntx.uniformMatrix4fv(uniformLoc, false, trans_mat, 0, 0);
+
+      // drawing
+      vao.draw(program);
+
+      requestAnimationFrame(render)
+    }
+
+    requestAnimationFrame(render);
   }
 }
 

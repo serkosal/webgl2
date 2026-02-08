@@ -2,6 +2,8 @@
      
 in vec4 a_position;
 
+uniform mat4 trans;
+
 void main() {
-  gl_Position = a_position;
+  gl_Position = trans * a_position;
 }
