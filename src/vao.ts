@@ -32,10 +32,10 @@ export default class VAO {
     }
 
     bind(): void {
+        this.cntx.bindVertexArray(this.vao);
         this.vbo.bind();
         if (this.ebo)
             this.ebo.bind();
-        this.cntx.bindVertexArray(this.vao);
     }
 
     link(program: WebGLProgram, attribs: IAttrib): void {

@@ -8,17 +8,7 @@ import createShaders from './shaders.ts';
 import vertShaderSource from './shaders/default.vert?raw';
 import fragShaderSource from './shaders/default.frag?raw';
 
-const proj_mat = mat4.fromValues(
-   1,  0,  0,  0,
-   0,  1,  0,  0,
-   0,  0,  1, -1,
-   0,  0,  0,  1
-);
-let model_mat = mat4.create();
-let view_mat = mat4.create();
-mat4.translate(view_mat, view_mat, vec3.fromValues(0, 0, -5));
 let cam_velocity = vec3.create(); vec3.zero(cam_velocity);
-
 let lastTime = Date.now();
 
 function init() : {
@@ -32,7 +22,7 @@ function init() : {
     console.log("Could not initialize canvas element!");
     return;
   }
-  const cntx = canv?.getContext("webgl2");
+  const cntx = canv?.getContext("webgl2", {depth: true});
   if (!cntx) {
     console.log('WebGL 2 is not supported on this system!');
     return;
@@ -44,49 +34,91 @@ function init() : {
     console.log('Could not compile shaders into the program!');
     return;
   }
-  
-  const vbo = new VBO(cntx, [//      5---------------6
-     1.0, -1.0, -1.0,   // 0        /|              /|
-     1.0,  1.0, -1.0,   // 1       / |             / |
-    -1.0,  1.0, -1.0,   // 2      2---------------1  |
-    -1.0, -1.0, -1.0,   // 3      |  |            |  |
-                        //        |  |            |  |
-    -1.0, -1.0,  1.0,   // 4      |  4------------|--7
-    -1.0,  1.0,  1.0,   // 5      | /             | /
-     1.0,  1.0,  1.0,   // 6      |/              |/
-     1.0, -1.0,  1.0,   // 7      3---------------0
-  ]);
-  const ebo = new EBO(cntx, [
-    0, 1, 2,            // front
-    2, 3, 0,            
-    3, 4, 5,            // left
-    5, 2, 3,
-    3, 0, 7,            // bottom
-    7, 4, 0,
-    0, 7, 6,            // right
-    6, 1, 0,
-    4, 7, 6,            // back
-    6, 5, 4,
-    2, 1, 6,            // top
-    6, 5, 1
-  ]);
-  const vao = new VAO(cntx, vbo, ebo);
+  const vbo = new VBO(cntx, [
+    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+     0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+     0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+     0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+    -0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+
+    -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
+     0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
+     0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+     0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+    -0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+    -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
+
+    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
+    -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,
+    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
+
+     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+     0.5,  0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5,  0.5,  1.0,  0.0,  0.0,
+     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+
+    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+    -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+
+    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+    -0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0
+  ], 6);
+  const vao = new VAO(cntx, vbo);
 
   vao.link(program, {
-    name: "a_position", 
-    size: 3, 
+    name: "aPos", 
+    size: 3,
     type: cntx.FLOAT, 
     normalized: false,
-    stride: 0, offset: 0
+    stride: 6 * Float32Array.BYTES_PER_ELEMENT, offset: 0
   });
-
+  vao.link(program, {
+    name: "aNorm", 
+    size: 3,
+    type: cntx.FLOAT, 
+    normalized: false,
+    stride: 6 * Float32Array.BYTES_PER_ELEMENT, offset: 3 * Float32Array.BYTES_PER_ELEMENT
+  });
   
   // viewport
   cntx.viewport(0, 0, cntx.canvas.width, cntx.canvas.height);
 
   cntx.clearColor(0, 0, 0, 0);
 
+  cntx.enable(cntx.DEPTH_TEST);
+  cntx.depthFunc(cntx.LESS);
+  cntx.clearDepth(1.0);
+
+  // cntx.enable(cntx.CULL_FACE);
+  // cntx.cullFace(cntx.BACK);  
+  // cntx.frontFace(cntx.CW);
+
   return {cntx, program, vao};
+}
+
+function perspective(fov: number, aspect: number, near: number, far: number): mat4 {
+    const f = 1.0 / Math.tan(fov / 2);
+    const nf = 1 / (near - far);
+    return mat4.fromValues(
+        f / aspect, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, (far + near) * nf, -1,
+        0, 0, (2 * far * near) * nf, 0
+    );
 }
 
 function main() {
@@ -95,18 +127,26 @@ function main() {
   if (init_res) {
     const {cntx, program, vao} = init_res;
     
-    let trans_mat = mat4.create();
-    let cam_movement = vec3.create(); 
+    let cam_movement = vec3.create();
+    let model_mat = mat4.create();
+    let view_mat = mat4.create();
+    mat4.translate(view_mat, view_mat, vec3.fromValues(0, 0, -5));
 
-    // setting trans matrix
+    // getting shaders uniforms 
     cntx.useProgram(program);
-    const uniformLoc = cntx.getUniformLocation(program, "trans");
-    
+    const uniformModel = cntx.getUniformLocation(program, "model");
+    const uniformView  = cntx.getUniformLocation(program, "view");
+    const proj_mat = perspective(90, cntx.canvas.width / cntx.canvas.height, 0.1, 100);
+    cntx.uniformMatrix4fv(
+      cntx.getUniformLocation(program, "proj"), false, proj_mat, 0, 0);
+    const LightPos = cntx.getUniformLocation(program, "lightPos");
+    let LightPosV = vec3.fromValues(5, 10, 5);
+    cntx.uniform3fv(LightPos, LightPosV);
 
     function render(time: number)
     {
       // clearing 
-      cntx.clear(cntx.COLOR_BUFFER_BIT);
+      cntx.clear(cntx.COLOR_BUFFER_BIT | cntx.DEPTH_BUFFER_BIT);
 
       // elapsed time
       const dt = (time - lastTime) / 1000;
@@ -114,15 +154,14 @@ function main() {
       
       // update matrices
       mat4.rotateY(model_mat, model_mat, dt * Math.PI / 4);
-      mat4.rotateZ(model_mat, model_mat, dt * Math.PI / 2);
+      // mat4.rotateZ(model_mat, model_mat, dt * Math.PI / 2);
 
       vec3.scale(cam_movement, cam_velocity, dt);
       mat4.translate(view_mat, view_mat, cam_movement);
 
-      mat4.mul(trans_mat, view_mat, model_mat);
-      mat4.mul(trans_mat, proj_mat, trans_mat);
-      // mat4.mul(trans_mat, proj_mat, view_mat);
-      cntx.uniformMatrix4fv(uniformLoc, false, trans_mat, 0, 0);
+      // pass matrices into the vertex shader
+      cntx.uniformMatrix4fv(uniformModel, false, model_mat, 0, 0);
+      cntx.uniformMatrix4fv(uniformView, false, view_mat, 0, 0);
 
       // drawing
       vao.draw(program);
@@ -149,6 +188,12 @@ window.addEventListener('keydown', (e) => {
     case 'ArrowLeft':
       cam_velocity[0] = 10;
       break;
+    case ' ':
+      cam_velocity[1] = -10;
+      break;
+    case 'Control':
+      cam_velocity[1] = 10;
+      break;
   
     default:
       break;
@@ -174,6 +219,13 @@ window.addEventListener('keyup', (e) => {
 
     case 'ArrowLeft':
       cam_velocity[0] = 0;
+      break;
+
+    case ' ':
+      cam_velocity[1] = 0;
+      break;
+    case 'Control':
+      cam_velocity[1] = 0;
       break;
   
     default:
