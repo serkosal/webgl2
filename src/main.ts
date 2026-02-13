@@ -2,13 +2,14 @@ import './style.css'
 
 import { mat4, vec3 } from 'gl-matrix';
 
+import { Camera } from './camera.ts'; 
 import { VBO } from './gl_buffers.ts';
 import VAO from './vao.ts';
 import createShaders from './shaders.ts';
 import vertShaderSource from './shaders/default.vert?raw';
 import fragShaderSource from './shaders/default.frag?raw';
 
-let cam_velocity = vec3.create(); vec3.zero(cam_velocity);
+const cam = new Camera();
 let lastTime = Date.now();
 
 function init() : {
@@ -110,35 +111,22 @@ function init() : {
   return {cntx, program, vao};
 }
 
-function perspective(fov: number, aspect: number, near: number, far: number): mat4 {
-    const f = 1.0 / Math.tan(fov / 2);
-    const nf = 1 / (near - far);
-    return mat4.fromValues(
-        f / aspect, 0, 0, 0,
-        0, f, 0, 0,
-        0, 0, (far + near) * nf, -1,
-        0, 0, (2 * far * near) * nf, 0
-    );
-}
-
 function main() {
   const init_res = init();
 
   if (init_res) {
     const {cntx, program, vao} = init_res;
     
-    let cam_movement = vec3.create();
     let model_mat = mat4.create();
-    let view_mat = mat4.create();
-    mat4.translate(view_mat, view_mat, vec3.fromValues(0, 0, -5));
+    // let view_mat = mat4.create();
+    cam.move(vec3.fromValues(0, 0, -5));
 
     // getting shaders uniforms 
     cntx.useProgram(program);
     const uniformModel = cntx.getUniformLocation(program, "model");
     const uniformView  = cntx.getUniformLocation(program, "view");
-    const proj_mat = perspective(90, cntx.canvas.width / cntx.canvas.height, 0.1, 100);
     cntx.uniformMatrix4fv(
-      cntx.getUniformLocation(program, "proj"), false, proj_mat, 0, 0);
+      cntx.getUniformLocation(program, "proj"), false, cam.proj, 0, 0);
     const LightPos = cntx.getUniformLocation(program, "lightPos");
     let LightPosV = vec3.fromValues(5, 10, 5);
     cntx.uniform3fv(LightPos, LightPosV);
@@ -156,12 +144,12 @@ function main() {
       mat4.rotateY(model_mat, model_mat, dt * Math.PI / 4);
       // mat4.rotateZ(model_mat, model_mat, dt * Math.PI / 2);
 
-      vec3.scale(cam_movement, cam_velocity, dt);
-      mat4.translate(view_mat, view_mat, cam_movement);
+      // move camera
+      cam.move(cam.velocity, dt);
 
       // pass matrices into the vertex shader
       cntx.uniformMatrix4fv(uniformModel, false, model_mat, 0, 0);
-      cntx.uniformMatrix4fv(uniformView, false, view_mat, 0, 0);
+      cntx.uniformMatrix4fv(uniformView, false, cam.view, 0, 0);
 
       // drawing
       vao.draw(program);
@@ -177,22 +165,22 @@ window.addEventListener('keydown', (e) => {
   
   switch (e.key) {
     case 'ArrowDown':
-      cam_velocity[2] = -10;
+      cam.velocity[2] = -10;
       break;
     case 'ArrowRight':
-      cam_velocity[0] = -10;
+      cam.velocity[0] = -10;
       break;
     case 'ArrowUp':
-      cam_velocity[2] = 10;
+      cam.velocity[2] = 10;
       break;
     case 'ArrowLeft':
-      cam_velocity[0] = 10;
+      cam.velocity[0] = 10;
       break;
     case ' ':
-      cam_velocity[1] = -10;
+      cam.velocity[1] = -10;
       break;
     case 'Control':
-      cam_velocity[1] = 10;
+      cam.velocity[1] = 10;
       break;
   
     default:
@@ -206,26 +194,26 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => {
   switch (e.key) {
     case 'ArrowDown':
-      cam_velocity[2] = 0;
+      cam.velocity[2] = 0;
       break;
 
     case 'ArrowRight':
-      cam_velocity[0] = 0;
+      cam.velocity[0] = 0;
       break;
 
     case 'ArrowUp':
-      cam_velocity[2] = 0;
+      cam.velocity[2] = 0;
       break;
 
     case 'ArrowLeft':
-      cam_velocity[0] = 0;
+      cam.velocity[0] = 0;
       break;
 
     case ' ':
-      cam_velocity[1] = 0;
+      cam.velocity[1] = 0;
       break;
     case 'Control':
-      cam_velocity[1] = 0;
+      cam.velocity[1] = 0;
       break;
   
     default:

@@ -1,2 +1,2 @@
 # webgl
-webgl testing &amp; experiments
+webgl2 testing &amp; experiments
