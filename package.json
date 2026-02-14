@@ -13,6 +13,8 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
-    "gl-matrix": "^3.4.4"
+    "@tailwindcss/vite": "^4.1.18",
+    "gl-matrix": "^3.4.4",
+    "tailwindcss": "^4.1.18"
   }
 }

@@ -39,6 +39,10 @@ export class Camera {
     return this.orthoFromPlanes(n, f, r, -r, t, -t);
   }
 
+  getPos(): vec3 {
+    return this.pos;
+  }
+
   getProj(n: number, f: number): mat4 {
     return mat4.fromValues(
       1, 0,     0,     0,

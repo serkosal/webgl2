@@ -23,6 +23,7 @@ function init() : {
 } | undefined {
   // check html canvas and WebGL2 context
   const canv = document.querySelector<HTMLCanvasElement>('#webgl-canvas');
+
   if (!canv) {
     console.log("Could not initialize canvas element!");
     return;
@@ -147,8 +148,15 @@ function main() {
   const init_res = init();
 
   if (init_res) {
-    const {cntx, program, floor_program, vao, floor_vao} = init_res;
+    const { cntx, program, floor_program, vao, floor_vao } = init_res;
     
+    const camPosXEl = document.querySelector<HTMLDivElement>('#cam-pos-x');
+    const camPosYEl = document.querySelector<HTMLDivElement>('#cam-pos-y');
+    const camPosZEl = document.querySelector<HTMLDivElement>('#cam-pos-z');
+    const camDirXEl = document.querySelector<HTMLDivElement>('#cam-dir-x');
+    const camDirYEl = document.querySelector<HTMLDivElement>('#cam-dir-y');
+    const camDirZEl = document.querySelector<HTMLDivElement>('#cam-dir-z');
+
     let model_mat = mat4.create();
 
     // getting shaders uniforms
@@ -178,6 +186,21 @@ function main() {
       // elapsed time
       const dt = (time - lastTime) / 1000;
       lastTime = time;
+
+      // Update HTML elements
+      if (camPosXEl && camPosYEl && camPosZEl) {
+        const cam_pos = cam.getPos();
+        camPosXEl.innerText = `x: ${cam_pos[0]}`;
+        camPosYEl.innerText = `y: ${cam_pos[1]}`;
+        camPosZEl.innerText = `z: ${cam_pos[2]}`;
+      }
+      if (camDirXEl && camDirYEl && camDirZEl) {
+        const cam_dir = cam.getDir();
+        camDirXEl.innerText = `x: ${cam_dir[0]}`;
+        camDirYEl.innerText = `y: ${cam_dir[1]}`;
+        camDirZEl.innerText = `z: ${cam_dir[2]}`;
+      }
+      
       
       // update matrices
       //mat4.rotateY(model_mat, model_mat, dt * Math.PI / 8);
@@ -212,8 +235,8 @@ function main() {
 window.addEventListener('keydown', (e) => {
   const MOVEMENT_SPEED = 5;
   const ROTATION_SPEED = 15;
-  
   switch (e.key) {
+    
     case 's':
       cam.velocity[2] = -MOVEMENT_SPEED;
       break;
@@ -229,7 +252,7 @@ window.addEventListener('keydown', (e) => {
     case ' ':
       cam.velocity[1] = MOVEMENT_SPEED;
       break;
-    case 'Control':
+    case 'c':
       cam.velocity[1] = -MOVEMENT_SPEED;
       break;
     case 'ArrowDown':
@@ -277,7 +300,7 @@ window.addEventListener('keyup', (e) => {
     case ' ':
       cam.velocity[1] = 0;
       break;
-    case 'Control':
+    case 'c':
       cam.velocity[1] = 0;
       break;
 
