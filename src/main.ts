@@ -119,7 +119,6 @@ function main() {
     
     let model_mat = mat4.create();
     // let view_mat = mat4.create();
-    cam.move(vec3.fromValues(0, 0, -5));
 
     // getting shaders uniforms 
     cntx.useProgram(program);
@@ -141,15 +140,18 @@ function main() {
       lastTime = time;
       
       // update matrices
-      mat4.rotateY(model_mat, model_mat, dt * Math.PI / 4);
+      //mat4.rotateY(model_mat, model_mat, dt * Math.PI / 8);
       // mat4.rotateZ(model_mat, model_mat, dt * Math.PI / 2);
 
       // move camera
       cam.move(cam.velocity, dt);
+      cam.rotate(cam.getRight(), cam.rot_vel[0], dt);
+      cam.rotate(cam.getUp(), cam.rot_vel[1], dt);
+      cam.rotate(cam.getDir(), cam.rot_vel[2], dt);
 
       // pass matrices into the vertex shader
       cntx.uniformMatrix4fv(uniformModel, false, model_mat, 0, 0);
-      cntx.uniformMatrix4fv(uniformView, false, cam.view, 0, 0);
+      cntx.uniformMatrix4fv(uniformView, false, cam.lookAt(), 0, 0);
 
       // drawing
       vao.draw(program);
@@ -162,25 +164,45 @@ function main() {
 }
 
 window.addEventListener('keydown', (e) => {
+  const MOVEMENT_SPEED = 5;
+  const ROTATION_SPEED = 15;
   
   switch (e.key) {
-    case 'ArrowDown':
-      cam.velocity[2] = -10;
+    case 's':
+      cam.velocity[2] = -MOVEMENT_SPEED;
       break;
-    case 'ArrowRight':
-      cam.velocity[0] = -10;
+    case 'd':
+      cam.velocity[0] = MOVEMENT_SPEED;
       break;
-    case 'ArrowUp':
-      cam.velocity[2] = 10;
+    case 'w':
+      cam.velocity[2] = MOVEMENT_SPEED;
       break;
-    case 'ArrowLeft':
-      cam.velocity[0] = 10;
+    case 'a':
+      cam.velocity[0] = -MOVEMENT_SPEED;
       break;
     case ' ':
-      cam.velocity[1] = -10;
+      cam.velocity[1] = MOVEMENT_SPEED;
       break;
     case 'Control':
-      cam.velocity[1] = 10;
+      cam.velocity[1] = -MOVEMENT_SPEED;
+      break;
+    case 'ArrowDown':
+      cam.rot_vel[0] = ROTATION_SPEED;
+      break;
+    case 'ArrowRight':
+      cam.rot_vel[1] = ROTATION_SPEED;
+      break;
+    case 'ArrowUp':
+      cam.rot_vel[0] = -ROTATION_SPEED;
+      break;
+    case 'ArrowLeft':
+      cam.rot_vel[1] = -ROTATION_SPEED;
+      break;
+    case 'q':
+      cam.rot_vel[2] = -ROTATION_SPEED;
+      break;
+    case 'e':
+      cam.rot_vel[2] = ROTATION_SPEED;
       break;
   
     default:
@@ -193,27 +215,43 @@ window.addEventListener('keydown', (e) => {
 
 window.addEventListener('keyup', (e) => {
   switch (e.key) {
-    case 'ArrowDown':
+
+    case 's':
       cam.velocity[2] = 0;
       break;
-
-    case 'ArrowRight':
+    case 'd':
       cam.velocity[0] = 0;
       break;
-
-    case 'ArrowUp':
+    case 'w':
       cam.velocity[2] = 0;
       break;
-
-    case 'ArrowLeft':
+    case 'a':
       cam.velocity[0] = 0;
       break;
-
     case ' ':
       cam.velocity[1] = 0;
       break;
     case 'Control':
       cam.velocity[1] = 0;
+      break;
+
+    case 'ArrowDown':
+      cam.rot_vel[0] = 0;
+      break;
+    case 'ArrowRight':
+      cam.rot_vel[1] = 0;
+      break;
+    case 'ArrowUp':
+      cam.rot_vel[0] = 0;
+      break;
+    case 'ArrowLeft':
+      cam.rot_vel[1] = 0;
+      break;
+    case 'q':
+      cam.rot_vel[2] = 0;
+      break;
+    case 'e':
+      cam.rot_vel[2] = 0;
       break;
   
     default:
