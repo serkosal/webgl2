@@ -8,6 +8,8 @@ import VAO from './vao.ts';
 import createShaders from './shaders.ts';
 import vertShaderSource from './shaders/default.vert?raw';
 import fragShaderSource from './shaders/default.frag?raw';
+import floorVertShaderSource from './shaders/floor.vert?raw';
+import floorFragShaderSource from './shaders/floor.frag?raw';
 
 const cam = new Camera();
 let lastTime = Date.now();
@@ -15,7 +17,9 @@ let lastTime = Date.now();
 function init() : {
   cntx: WebGL2RenderingContext,
   program: WebGLProgram,
-  vao: VAO
+  floor_program: WebGLProgram,
+  vao: VAO,
+  floor_vao: VAO
 } | undefined {
   // check html canvas and WebGL2 context
   const canv = document.querySelector<HTMLCanvasElement>('#webgl-canvas');
@@ -35,6 +39,14 @@ function init() : {
     console.log('Could not compile shaders into the program!');
     return;
   }
+  const floor_program = createShaders(cntx, 
+    floorVertShaderSource, floorFragShaderSource);
+  if (!floor_program) {
+    console.log('Could not compile floor shaders into the program!');
+    return;
+  }
+
+  // cube 
   const vbo = new VBO(cntx, [
     -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
      0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
@@ -79,7 +91,7 @@ function init() : {
     -0.5,  0.5, -0.5,  0.0,  1.0,  0.0
   ], 6);
   const vao = new VAO(cntx, vbo);
-
+  cntx.useProgram(program);
   vao.link(program, {
     name: "aPos", 
     size: 3,
@@ -92,13 +104,32 @@ function init() : {
     size: 3,
     type: cntx.FLOAT, 
     normalized: false,
-    stride: 6 * Float32Array.BYTES_PER_ELEMENT, offset: 3 * Float32Array.BYTES_PER_ELEMENT
+    stride: 6 * Float32Array.BYTES_PER_ELEMENT, 
+    offset: 3 * Float32Array.BYTES_PER_ELEMENT
+  });
+  // floor
+  const floor_vbo = new VBO(cntx, [
+    -100.0, -0.5,  100.0,
+     100.0, -0.5,  100.0,
+     100.0, -0.5, -100.0,
+     100.0, -0.5, -100.0,
+    -100.0, -0.5, -100.0,
+    -100.0, -0.5,  100.0,
+  ]);
+  const floor_vao = new VAO(cntx, floor_vbo);
+  cntx.useProgram(floor_program);
+  floor_vao.link(floor_program, {
+    name: "aPos", 
+    size: 3,
+    type: cntx.FLOAT, 
+    normalized: false,
+    stride: 3 * Float32Array.BYTES_PER_ELEMENT, offset: 0
   });
   
   // viewport
   cntx.viewport(0, 0, cntx.canvas.width, cntx.canvas.height);
 
-  cntx.clearColor(0, 0, 0, 0);
+  cntx.clearColor(0, 0, 0, 1.0);
 
   cntx.enable(cntx.DEPTH_TEST);
   cntx.depthFunc(cntx.LESS);
@@ -108,27 +139,36 @@ function init() : {
   // cntx.cullFace(cntx.BACK);  
   // cntx.frontFace(cntx.CW);
 
-  return {cntx, program, vao};
+  //return {cntx, floor_program, floor_vao};
+  return {cntx, program, floor_program, vao, floor_vao};
 }
 
 function main() {
   const init_res = init();
 
   if (init_res) {
-    const {cntx, program, vao} = init_res;
+    const {cntx, program, floor_program, vao, floor_vao} = init_res;
     
     let model_mat = mat4.create();
-    // let view_mat = mat4.create();
 
-    // getting shaders uniforms 
+    // getting shaders uniforms
     cntx.useProgram(program);
     const uniformModel = cntx.getUniformLocation(program, "model");
     const uniformView  = cntx.getUniformLocation(program, "view");
     cntx.uniformMatrix4fv(
       cntx.getUniformLocation(program, "proj"), false, cam.proj, 0, 0);
-    const LightPos = cntx.getUniformLocation(program, "lightPos");
-    let LightPosV = vec3.fromValues(5, 10, 5);
-    cntx.uniform3fv(LightPos, LightPosV);
+    cntx.uniform3fv(
+      cntx.getUniformLocation(program, "lightPos"), vec3.fromValues(5, 10, 5));
+
+    cntx.useProgram(floor_program);
+    cntx.uniform3fv(
+      cntx.getUniformLocation(floor_program, "lightPos"), 
+      vec3.fromValues(5, 10, 5)
+    );
+    cntx.uniformMatrix4fv(
+      cntx.getUniformLocation(floor_program, "proj"), false, cam.proj
+    );
+    const floorUniformView = cntx.getUniformLocation(floor_program, "view");
 
     function render(time: number)
     {
@@ -143,13 +183,19 @@ function main() {
       //mat4.rotateY(model_mat, model_mat, dt * Math.PI / 8);
       // mat4.rotateZ(model_mat, model_mat, dt * Math.PI / 2);
 
-      // move camera
+      //move camera
       cam.move(cam.velocity, dt);
       cam.rotate(cam.getRight(), cam.rot_vel[0], dt);
       cam.rotate(cam.getUp(), cam.rot_vel[1], dt);
       cam.rotate(cam.getDir(), cam.rot_vel[2], dt);
 
+      // draw floor
+      cntx.useProgram(floor_program);
+      cntx.uniformMatrix4fv(floorUniformView, false, cam.lookAt(), 0, 0);
+      floor_vao.draw(floor_program);
+
       // pass matrices into the vertex shader
+      cntx.useProgram(program);
       cntx.uniformMatrix4fv(uniformModel, false, model_mat, 0, 0);
       cntx.uniformMatrix4fv(uniformView, false, cam.lookAt(), 0, 0);
 

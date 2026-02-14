@@ -61,20 +61,24 @@ export class Camera {
     return vec3.fromValues(this.up[0], this.up[1], this.up[2]);
   }
 
-  lookAt(): mat4 {
+  getRotMatrix(): mat4 {
     const r = this.getRight();
     const u = this.getUp();
     const d = this.getDir();
 
+    return mat4.fromValues(
+      r[0], u[0], d[0], 0,
+      r[1], u[1], d[1], 0,
+      r[2], u[2], d[2], 0,
+        0,    0,    0,  1
+    );
+  }
+
+  lookAt(): mat4 {
     let res = mat4.create();
     mat4.mul(
       res, 
-      mat4.fromValues(
-        r[0], u[0], d[0], 0,
-        r[1], u[1], d[1], 0,
-        r[2], u[2], d[2], 0,
-          0,    0,    0,  1
-      ), 
+      this.getRotMatrix(), 
       mat4.fromValues(
         1, 0, 0, 0,
         0, 1, 0, 0,
