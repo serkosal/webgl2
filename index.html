@@ -5,16 +5,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>webgl2</title>
-  <script type="module" crossorigin src="/assets/index-C9bRA16K.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Cl4zR-Ae.css">
+  <script type="module" crossorigin src="/assets/index-BdbtUC3C.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-zJzfA6fV.css">
 </head>
 
-<body>
-  <div id="app"></div>
+<body class="flex flex-col items-center">
 
-  <canvas id="webgl-canvas" width="600" height="300">
-    webgl2 canvas
-  </canvas>
+  <div class="w-[50dvw] mt-[10dvh] flex flex-col items-center gap-4">
+    <canvas class="h-[50dvh]" id="webgl-canvas" width="600" height="300">
+      webgl2 canvas
+    </canvas>
+
+    <div class="flex justify-around w-full">
+      <div>
+        <h3>Cam position: </h3>
+        <p id="cam-pos-x"></p>
+        <p id="cam-pos-y"></p>
+        <p id="cam-pos-z"></p>
+      </div>
+
+      <div>
+        <h3>Cam direction: </h3>
+        <p id="cam-dir-x"></p>
+        <p id="cam-dir-y"></p>
+        <p id="cam-dir-z"></p>
+      </div>
+    </div>
+  </div>
+  
 </body>
 
 </html>
