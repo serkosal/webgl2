@@ -215,7 +215,7 @@ function main() {
       // draw floor
       cntx.useProgram(floor_program);
       cntx.uniformMatrix4fv(floorUniformView, false, cam.lookAt(), 0, 0);
-      floor_vao.draw(floor_program);
+      floor_vao.draw();
 
       // pass matrices into the vertex shader
       cntx.useProgram(program);
@@ -223,7 +223,7 @@ function main() {
       cntx.uniformMatrix4fv(uniformView, false, cam.lookAt(), 0, 0);
 
       // drawing
-      vao.draw(program);
+      vao.draw();
 
       requestAnimationFrame(render)
     }

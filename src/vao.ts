@@ -47,9 +47,7 @@ export default class VAO {
             attribs.normalized, attribs.stride, attribs.offset);
     }
 
-    draw(program: WebGLProgram, primitive = this.cntx.TRIANGLES, offset = 0): void {
-
-        this.cntx.useProgram(program);
+    draw(primitive = this.cntx.TRIANGLES, offset = 0): void {
         this.bind();
 
         if (this.ebo) {
